@@ -15,12 +15,17 @@ protocol testDelegate
 }
 class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, returnRepeatDelegate
 {
-    
+    var addStructure : AlarmViewController.alarmInfo?
+    {
+        didSet
+        {
+            print("is lala")
+        }
+    }
     var delegate : testDelegate?
     let timeLabel = UILabel()
     let cancelButton = UIButton()
     let addCellButton = UIButton()
-    let dateFormat = DateFormatter()
     let timeDatePicker = UIDatePicker()
     let anotherSettingTableView = UITableView()
     let fullSize = UIScreen.main.bounds.size
@@ -32,18 +37,17 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
 //    var addLabel : String = ""
 //    var addTime : String = ""
     var nowIsEditing : Bool = false
-    var addStructure = AlarmViewController.alarmInfo()
     var indexPathRowTemp : Int = 0
     {
         didSet
         {
             nowIsEditing = true
-            print("!@#")
         }
     }
     override func viewDidLoad()
     {
         super.viewDidLoad()
+        changeOrEdit()
         // Navigation title setting
         self.title = "加入鬧鐘"
         self.navigationController?.navigationBar.barTintColor = backgroundColor
@@ -78,8 +82,6 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         timeLabel.backgroundColor = .clear
         self.view.addSubview(timeLabel)
         
-        //timeDataPicker
-        dateFormat.dateFormat = "HH:mm"
         timeDatePicker.translatesAutoresizingMaskIntoConstraints = false
         timeDatePicker.datePickerMode = .time
         timeDatePicker.preferredDatePickerStyle = .wheels
@@ -87,16 +89,7 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         timeDatePicker.locale = Locale(identifier: "en_GB")
         timeDatePicker.minuteInterval = 1
         
-
-        if addStructure.label.isEmpty
-        {
-            timeDatePicker.date = Date()
-        }
-        else
-        {
-            let date = dateFormat.date(from: addStructure.time)
-            timeDatePicker.date = date!
-        }
+        // MARK: Date
         timeDatePicker.addTarget(self, action: #selector(dateChange), for: .valueChanged)
         self.view.addSubview(timeDatePicker)
         
@@ -114,7 +107,25 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         // AutoLayout
         autoLayout()
     }
-     
+    
+    func changeOrEdit()
+    {
+        if addStructure == nil
+        {
+            print("is nil")
+            addStructure = AlarmViewController.alarmInfo(
+                time: Date(),
+                label: "鬧鐘",
+                isDone: [false, false, false, false, false, false, false,])
+        }
+        else
+        {
+            print("is ok")
+            print("addStructure = \(addStructure)")
+            timeDatePicker.date = addStructure!.time
+        }
+    }
+    
     override func viewWillAppear(_ animated: Bool)
     {
         super.viewWillAppear(animated)
@@ -132,19 +143,19 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     
     @objc func addCell()
     {
-        addStructure.time = dateFormat.string(from: timeDatePicker.date)
-        if addStructure.label.isEmpty
+        addStructure?.time = timeDatePicker.date
+        
+        if let addStructure = addStructure
         {
-            addStructure.label = "鬧鐘"
-        }
-        if nowIsEditing == true
-        {
-            delegate?.returnEditingData(data: addStructure, indexPathRow: indexPathRowTemp)
+            if nowIsEditing == true
+            {
+                delegate?.returnEditingData(data: addStructure, indexPathRow: indexPathRowTemp)
             
-        }
-        else
-        {
-            delegate?.addNewAlarmMember(data: addStructure)
+            }
+            else
+            {
+                delegate?.addNewAlarmMember(data: addStructure)
+            }
         }
         dismiss(animated: true, completion: nil)
     }
@@ -166,11 +177,11 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         cell.accessoryType = .disclosureIndicator
         if indexPath.row == 0
         {
-            cell.detailTextLabel?.text = (addStructure.isDone.isEmpty ? "永不" : AlarmViewController().repeatDetailSet(weekStructure: addStructure))
+            cell.detailTextLabel?.text = (addStructure!.isDone.isEmpty ? "永不" : AlarmViewController().repeatDetailSet(weekStructure: addStructure!))
         }
         else if indexPath.row == 1
         {
-            cell.detailTextLabel?.text = (addStructure.label.isEmpty ? "鬧鐘" : addStructure.label)
+            cell.detailTextLabel?.text = addStructure?.label
         }
         return cell
     }
@@ -184,18 +195,17 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath)
     {
         anotherSettingTableView.deselectRow(at: indexPath, animated: true)
-        
         if indexPath.row == 0
         {
             let vc2 = RepeatDateViewController()
             vc2.delegate = self
-            if addStructure.isDone.isEmpty
+            if ((addStructure?.isDone.isEmpty) != nil)
             {
                 vc2.isDone = Array(repeating: false, count: 7)
             }
             else
             {
-                vc2.isDone = addStructure.isDone
+                vc2.isDone = addStructure?.isDone ?? [false,false,false,false,false,false,false,]
             }
             self.navigationController?.pushViewController(vc2, animated: true)
         }
@@ -203,7 +213,7 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         {
             let vc2 = LabelViewController()
             vc2.delegate = self
-            vc2.labelTextField.text = ( addStructure.label.isEmpty ? "鬧鐘" : addStructure.label)
+            vc2.labelTextField.text = ( addStructure!.label.isEmpty ? "鬧鐘" : addStructure!.label)
             self.navigationController?.pushViewController(vc2, animated: true)
         }
         tableView.reloadRows(at: [indexPath], with: .automatic)
@@ -211,7 +221,7 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     
     func returnRepeatDelegate(returnIsDoen: [Bool])
     {
-        addStructure.isDone = returnIsDoen
+        addStructure!.isDone = returnIsDoen
     }
     
     func autoLayout() -> Void
@@ -258,6 +268,6 @@ extension AddAlarmViewController : LabelValueReturn
 {
     func labelValueReturn(data: String)
     {
-        addStructure.label = data
+        addStructure?.label = data
     }
 }

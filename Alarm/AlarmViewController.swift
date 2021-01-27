@@ -11,10 +11,12 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
 {
     let fullSize = UIScreen.main.bounds.size
     var newTableView = UITableView()
-    
-    struct alarmInfo
+    let dateFormat = DateFormatter()
+    let backgroundColor = UIColor(red: CGFloat(40.2/255), green: CGFloat(40.2/255), blue: CGFloat(40.2/255), alpha: 1)
+
+    struct alarmInfo : Codable
     {
-        var time : String = ""
+        var time : Date = Date()
         var label : String = ""
         var isDone : [Bool] = []
     }
@@ -49,12 +51,13 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
         
         //Table View
         newTableView.translatesAutoresizingMaskIntoConstraints = false
-        newTableView.frame = CGRect(x: 0, y: 20, width: fullSize.width, height: fullSize.height)
+        newTableView = UITableView(frame: CGRect(x: 0, y: 20, width: fullSize.width, height: fullSize.height), style: .grouped)
         //newTableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         newTableView.register(UINib(nibName: "AlarmTableViewCell", bundle: nil), forCellReuseIdentifier: "AlarmTableViewCell")
         newTableView.delegate = self
         newTableView.dataSource = self
         newTableView.separatorStyle = .singleLine
+        newTableView.separatorColor = backgroundColor
         newTableView.separatorInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
         newTableView.allowsSelection = false
         newTableView.allowsSelectionDuringEditing = true
@@ -72,30 +75,41 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
         self.navigationItem.leftBarButtonItem = self.editButtonItem
         self.navigationItem.leftBarButtonItem?.title = "編輯"
         self.navigationItem.leftBarButtonItem?.tintColor = .orange
+        
+        //timeDataPicker
+        dateFormat.dateFormat = "HH:mm"
     }
     func numberOfSections(in tableView: UITableView) -> Int
     {
-        return 2
+        return 3
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String?
     {
-        let title = section == 0 ? "鬧鐘" : "其他"
+        var title = section == 0 ? "鬧鐘" : "其他"
+        
+        if section == 0
+        {
+            title = "鬧鐘"
+        }
+        else if section == 1
+        {
+            title = "鬧鐘888"
+        }
+        else
+        {
+            title = "其他"
+        }
         return title
     }
-    
-//    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView?
-//    {
-//        let headerView = UIView()
-//        headerView.backgroundColor = UIColor.clear
-//        return headerView
-//    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int
     {
         switch section
         {
         case 0:
+            return 0
+        case 1:
             return 1
         default:
             return alarmInfos.count
@@ -106,7 +120,10 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
     {
         switch indexPath.section
         {
-            case 0:
+            case 0 :
+                let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! AlarmTableViewCell
+                return cell
+            case 1:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "AlarmTableViewCell", for: indexPath) as! AlarmTableViewCell
                 cell.alarmTimeLabel.text = "12:34"
                 cell.detalLabel?.text = "鬧鐘1234,永不"
@@ -115,10 +132,11 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 cell.accessoryView = alarmSwitch
                 cell.editingAccessoryType = .disclosureIndicator
                 return cell
-            case 1:
+            case 2:
+                let alarmCell = alarmInfos[indexPath.row]
                 let cell = tableView.dequeueReusableCell(withIdentifier: "AlarmTableViewCell", for: indexPath) as! AlarmTableViewCell
-                cell.alarmTimeLabel.text = alarmInfos[indexPath.row].time
-                cell.detalLabel.text = alarmInfos[indexPath.row].label + "," + repeatDetailSet(weekStructure: alarmInfos[indexPath.row])
+                cell.detalLabel.text = alarmInfos[indexPath.row].label + "," + repeatDetailSet(weekStructure: alarmCell)
+                cell.alarmTimeLabel.text = dateFormat.string(from: alarmCell.time)
                 let alarmSwitch = UISwitch(frame: .zero)
                 alarmSwitch.isOn = true
                 cell.accessoryView = alarmSwitch
@@ -161,6 +179,39 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
                 alarmInfos.remove(at: indexPath.row)
             default:
                 break
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int)
+    {
+        if let headerView = view as? UITableViewHeaderFooterView
+        {
+            headerView.textLabel?.textColor = .white
+            if section == 0
+            {
+                headerView.textLabel?.font = UIFont.systemFont(ofSize: 40)
+            }
+            else
+            {
+                headerView.textLabel?.font = UIFont.systemFont(ofSize: 20)
+            }
+        }
+        view.tintColor = .black
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat
+    {
+        if section == 0
+        {
+            return 80
+        }
+        else if section  == 1
+        {
+            return 10
+        }
+        else
+        {
+            return 40
         }
     }
 
@@ -249,32 +300,22 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     func saveData()
     {
-
-        let alarmInfosSave = alarmInfos.map{ (alarmInfo) -> [String : Any] in
-            return ["time" : alarmInfo.time, "label" : alarmInfo.label,"isDone": Array(alarmInfo.isDone)]
-        }
-
-        UserDefaults.standard.setValue(alarmInfosSave, forKey: "alarmInfoSave")
+        UserDefaults.standard.setValue(try? PropertyListEncoder().encode(alarmInfos), forKey: "alarmInfos")
         print("savedata")
     }
 
 
     func loadData()
     {
-        if let loadSuccess = UserDefaults.standard.array(forKey: "alarmInfoSave") as? [[String:Any]]
+        if let data = UserDefaults.standard.value(forKey: "alarmInfos") as? Data
         {
-            alarmInfos = []
-    
-            for loadInfo in loadSuccess
+            let alarmInfos2 = try? PropertyListDecoder().decode(Array<alarmInfo>.self, from: data)
+            if let alarmInfos2 = alarmInfos2
             {
-                let time = loadInfo["time"] as? String ?? ""
-                let label = loadInfo["label"] as? String ?? ""
-                let isDone = loadInfo["isDone"] as? [Bool] ?? [false]
-
-                alarmInfos.append(alarmInfo(time: time, label: label, isDone: isDone))
+                alarmInfos = alarmInfos2
             }
         }
-
+        print("loadData")
     }
     
     /*

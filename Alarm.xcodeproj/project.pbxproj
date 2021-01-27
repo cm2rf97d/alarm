@@ -93,8 +93,16 @@
 				275C122B25B3BC9C000648D3 /* AlarmTableViewCell.xib */,
 				272EFB3425B04C0F007B1FFF /* EdifAlarmViewController.swift */,
 				27197D2225B686B000D706E2 /* LabelViewController.swift */,
+				2793537525C13E3A00525C44 /* Class */,
 			);
 			path = Alarm;
+			sourceTree = "<group>";
+		};
+		2793537525C13E3A00525C44 /* Class */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Class;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

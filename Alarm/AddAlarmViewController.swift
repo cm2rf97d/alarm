@@ -112,7 +112,6 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     {
         if addStructure == nil
         {
-            print("is nil")
             addStructure = AlarmViewController.alarmInfo(
                 time: Date(),
                 label: "鬧鐘",
@@ -120,8 +119,6 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         }
         else
         {
-            print("is ok")
-            print("addStructure = \(addStructure)")
             timeDatePicker.date = addStructure!.time
         }
     }
@@ -199,7 +196,7 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         {
             let vc2 = RepeatDateViewController()
             vc2.delegate = self
-            if ((addStructure?.isDone.isEmpty) != nil)
+            if addStructure == nil
             {
                 vc2.isDone = Array(repeating: false, count: 7)
             }

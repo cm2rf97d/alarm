@@ -9,19 +9,14 @@ import UIKit
 
 protocol testDelegate
 {
-    func addNewAlarmMember(data: AlarmViewController.alarmInfo)
+    func addNewAlarmMember(data: alarmInfo)
     
-    func returnEditingData(data: AlarmViewController.alarmInfo, indexPathRow: Int)
+    func returnEditingData(data: alarmInfo, indexPathRow: Int)
 }
 class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, returnRepeatDelegate
-{
-    var addStructure : AlarmViewController.alarmInfo?
-    {
-        didSet
-        {
-            print("is lala")
-        }
-    }
+{    
+    var addStructure : alarmInfo?
+
     var delegate : testDelegate?
     let timeLabel = UILabel()
     let cancelButton = UIButton()
@@ -31,11 +26,7 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     let fullSize = UIScreen.main.bounds.size
     let backgroundColor = UIColor(red: CGFloat(30.2/255), green: CGFloat(30.2/255), blue: CGFloat(30.2/255), alpha: 1)
     let tableViewtitle : [String] = ["重複","標籤","提示聲","稍後提醒"]
-    
-    
-//    var addRepeatDays : [RepeatDateViewController.Week] = []
-//    var addLabel : String = ""
-//    var addTime : String = ""
+
     var nowIsEditing : Bool = false
     var indexPathRowTemp : Int = 0
     {
@@ -112,10 +103,10 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
     {
         if addStructure == nil
         {
-            addStructure = AlarmViewController.alarmInfo(
+            addStructure = alarmInfo(
                 time: Date(),
                 label: "鬧鐘",
-                isDone: [false, false, false, false, false, false, false,])
+                isDone: [])
         }
         else
         {
@@ -196,13 +187,9 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         {
             let vc2 = RepeatDateViewController()
             vc2.delegate = self
-            if addStructure == nil
+            if let isDone = addStructure?.isDone
             {
-                vc2.isDone = Array(repeating: false, count: 7)
-            }
-            else
-            {
-                vc2.isDone = addStructure?.isDone ?? [false,false,false,false,false,false,false,]
+                vc2.isDone = isDone
             }
             self.navigationController?.pushViewController(vc2, animated: true)
         }
@@ -216,9 +203,9 @@ class AddAlarmViewController: UIViewController, UITableViewDataSource, UITableVi
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
     
-    func returnRepeatDelegate(returnIsDoen: [Bool])
+    func returnRepeatDelegate(returnIsDoen: Set<WeeksProcedure>)
     {
-        addStructure!.isDone = returnIsDoen
+        addStructure?.isDone = returnIsDoen
     }
     
     func autoLayout() -> Void

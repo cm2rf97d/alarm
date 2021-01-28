@@ -13,15 +13,8 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
     var newTableView = UITableView()
     let dateFormat = DateFormatter()
     let backgroundColor = UIColor(red: CGFloat(40.2/255), green: CGFloat(40.2/255), blue: CGFloat(40.2/255), alpha: 1)
-
-    struct alarmInfo : Codable
-    {
-        var time : Date = Date()
-        var label : String = ""
-        var isDone : [Bool] = []
-    }
     
-    var weekDays : [String] = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"]
+    //var weekDays : [String] = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"]
     
     var alarmInfos : [alarmInfo] = []
     {
@@ -241,61 +234,25 @@ class AlarmViewController: UIViewController, UITableViewDelegate, UITableViewDat
         saveData()
     }
     
-    func repeatDetailSet( weekStructure : alarmInfo ) -> String
+    func repeatDetailSet(weekStructure: alarmInfo) -> String
     {
-        //"星期一" "星期二" "星期三" "星期四" "星期五" "星期六" "星期日"
-        var test : String = "永不"
-        var sortArray : [String] = []
-        
-        if !weekStructure.isDone.isEmpty
+        var weekDetail: String = ""
+        switch weekStructure.isDone
         {
-            print(weekStructure.isDone)
-            if weekStructure.isDone == [true, false, false, false, false, false, true]
-            {
-                test = "週末"
-            }
-            else if weekStructure.isDone == [false, true, true, true, true, true, false]
-            {
-                test = "平日"
-            }
-            else if weekStructure.isDone == [true, true, true, true, true, true, true]
-            {
-                test = "每天"
-            }
-            else if weekStructure.isDone == [false, false, false, false, false, false, false]
-            {
-                test = "永不"
-            }
-            else
-            {
-                test = ""
-                for memberNum in 0..<weekDays.count
-                {
-                    if weekStructure.isDone[memberNum] == true
-                    {
-                        sortArray.append(weekDays[memberNum])
-                    }
-                    if memberNum == weekDays.count-1
-                    {
-                        let weekDayNumbers = [
-                            "星期一": 0,
-                            "星期二": 1,
-                            "星期三": 2,
-                            "星期四": 3,
-                            "星期五": 4,
-                            "星期六": 5,
-                            "星期七": 6,
-                        ]
-                        sortArray.sort(by: { (weekDayNumbers[$0] ?? 7) < (weekDayNumbers[$1] ?? 7) })
-                    }
-                }
-                for i in 0..<sortArray.count
-                {
-                    test += "\(sortArray[i])" + " "
-                }
-            }
+            case [.星期日,.星期六]:
+                weekDetail = "假日"
+            case [.星期一,.星期二,.星期三,.星期四,.星期五]:
+                weekDetail = "平日"
+            case [.星期一,.星期二,.星期三,.星期四,.星期五,.星期六,.星期日]:
+                weekDetail = "每天"
+            case []:
+                weekDetail = "永不"
+            default:
+                weekDetail = weekStructure.isDone
+                    .sorted(by: {$0.rawValue < $1.rawValue})
+                    .map({ $0.weeKdays}).joined(separator: " ")
         }
-        return test
+        return weekDetail
     }
     
     func saveData()
